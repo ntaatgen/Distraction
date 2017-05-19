@@ -1,0 +1,10 @@
+repeat 200
+reset
+run find-differences-easy training 100
+run-time find-differences-easy easy 900
+reset
+run find-differences-medium training 100
+run-time find-differences-medium medium 900
+reset
+run find-differences-hard training 100
+run-time find-differences-hard hard 900

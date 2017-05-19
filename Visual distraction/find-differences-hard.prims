@@ -1,0 +1,160 @@
+/// Model to test random attention shifts
+///
+
+define task find-differences-hard {
+initial-goals: (find-differences)
+goals: (attend-moving)
+start-screen: start
+lf: 0.5
+ans: 0.3
+ol: nil
+imaginal-autoclear: nil
+alpha: 0.1
+production-prim-latency: 0.2
+default-activation: 1.0
+input-activation: 0.65
+default-operator-assoc: 8.0
+
+}
+
+
+/// This implements the task
+define goal find-differences {
+	operator focus-screen {
+	  V1 = mainscreen
+	==>
+	  attenddownrandom -> AC1
+	}
+
+	operator next-random {
+	  V1 = pair
+	  V2 <> error
+	==>
+	  focusdown -> AC1
+	}
+
+	operator remember-first {
+	  V1 = letter
+	  V2 <> error
+	  WM1 = nil
+	==>
+	  V2 -> WM1
+	  focusnext -> AC1
+	}
+
+	operator compare-second {
+	V1 = letter
+	V2 = WM1
+	==>
+	nil -> WM1
+	attenduprandom -> AC1
+	}
+
+	operator compare-second-match {
+	V1 = letter
+	V2 <> error
+	V2 <> WM1
+	==>
+	say -> AC1
+	V2 -> AC2
+	WM1 -> AC3
+	stop -> G1
+	}
+
+	operator ignore-movie {
+	V1 = attend-moving
+	==>
+	attendrandom -> AC1
+	}
+
+	operator continue {
+	V1 = nil
+	==>
+	attendrandom -> AC1
+	}
+}
+
+// These operators implement looking at the visual distraction
+// Given that subjects only look very briefly at the distraction,
+// the model immediately looks back after looking at the movie
+
+define goal attend-moving {
+	operator look-at-movie {
+	V1 = attend-moving
+	V2 = nil
+	==>
+	attend-movie -> AC1
+	attending -> V2
+	}
+
+	operator look-back {
+	V1 = attend-moving
+	V2 = attending
+	==>
+	nil -> V1
+	}
+}
+
+
+define goal-action {
+(say x c)
+}
+
+
+// Say includes time to move to next trial
+define action say {
+  latency: 2.0
+  noise: 0.1
+  distribution: uniform
+  output: Saying
+}
+
+define screen start {
+  (mainscreen
+    (pair one (letter a) (letter a))
+    (pair two (letter b) (letter b))
+    (pair three (letter c) (letter x))
+    (pair four (letter d) (letter d))
+    (pair five (letter e) (letter e))
+    (pair six (letter f) (letter f))
+    (pair seven (letter f) (letter f))
+    (pair eight (letter f) (letter f))
+    (pair nine (letter f) (letter f))
+    (pair ten (letter f) (letter f))
+    (pair eleven (letter f) (letter f))
+    (pair twelve (letter f) (letter f))
+    (pair thirteen (letter f) (letter f))
+    (pair fourteen (letter f) (letter f))
+    (pair fifteen (letter f) (letter f))
+    (pair sixteen (letter f) (letter f))
+    (pair n17 (letter f) (letter f))
+    (pair n18 (letter f) (letter f))
+    (pair n19 (letter f) (letter f))
+    (pair n20 (letter f) (letter f))
+    (pair n21 (letter f) (letter f))
+    (pair n22 (letter f) (letter f))
+    (pair n23 (letter f) (letter f))
+    (pair n24 (letter f) (letter f))
+    (pair n25 (letter f) (letter f))
+    (pair n26 (letter f) (letter f))
+    (pair n27 (letter f) (letter f))
+    (pair n28 (letter f) (letter f))
+    (pair n29 (letter f) (letter f))
+    (pair n30 (letter f) (letter f))
+    (pair n31 (letter f) (letter f))
+    (pair n32 (letter f) (letter f))
+    (pair n33 (letter f) (letter f))
+    (pair n34 (letter f) (letter f))
+    (pair n35 (letter f) (letter f))
+    (pair n36 (letter f) (letter f))
+    (pair n37 (letter f) (letter f))
+    (pair n38 (letter f) (letter f))
+    (pair n39 (letter f) (letter f))
+    (pair n40 (letter f) (letter f))
+    (pair n41 (letter f) (letter f))
+
+    (attend-moving)
+    (attend-moving)
+)
+}
+

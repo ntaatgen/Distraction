@@ -1,0 +1,10 @@
+repeat 200
+reset
+run memory-distraction-easy training 100
+run-time memory-distraction-easy easy 900
+reset
+run memory-distraction-medium training 100
+run-time memory-distraction-medium medium 900
+reset
+run memory-distraction-hard training 100
+run-time memory-distraction-hard hard 900

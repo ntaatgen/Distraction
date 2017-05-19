@@ -1,0 +1,246 @@
+/// Model of the memory task with visual distraction
+/// Each of the three conditions has a separate model file
+/// They are identical, except for the part that sets the task
+/// In the newer versions, we do this through a script.
+
+define task memory-distraction-hard {
+	initial-goals: (read-equation arithmetic solve)
+	goals: (report-answer attend-moving)
+	task-constants: (report-answer)
+	start-screen: trial
+	lf: 0.3
+	ans: 0.1
+	ol: nil
+	imaginal-autoclear: t
+	alpha: 0.1
+	production-prim-latency: 0.2
+	default-activation: 1.0
+	input-activation: 0.182
+	default-operator-assoc: 8.0
+}
+
+// This goal reads the equation
+//
+define goal read-equation {
+		operator read-first {
+		V1 = item-one
+		V2 <> nil
+		==>
+		V2 -> WM1
+		read -> AC1
+		item-two -> AC2
+	}
+
+	operator read-second {
+		V1 = item-two
+		V2 <> nil
+		==>
+		V2 -> WM2
+		read -> AC1
+		item-three -> AC2
+	}
+
+	operator read-third {
+		V1 = item-three
+		V2 <> nil
+		==>
+		V2 -> WM3
+		read -> AC1
+		item-four -> AC2
+	}
+
+	operator read-fourth {
+		V1 = item-four
+		V2 <> done
+		==>
+		V2 -> WM4
+		done-reading -> AC1
+	}
+
+	operator read-fourth-none {
+		V1 = item-four
+		V2 = done
+		==>
+		done-reading -> AC1
+	}
+}
+
+// This goals performs arithmetic steps
+//
+define goal arithmetic {
+
+	operator retrieve-division {
+		RT1 = nil
+		WM2 = divide
+		WM3 <> nil
+		==>
+		WM2 -> RT1
+		WM1 -> RT2
+		WM3 -> RT3
+	}
+
+	operator retrieve-addition {
+		RT1 = nil
+		WM2 = addition
+		WM3 <> nil
+		==>
+		WM2 -> RT1
+		WM1 -> RT2
+		WM3 -> RT3
+	}
+
+	operator give-answer {
+		RT2 = WM1
+		==>
+		report-answer -> G2
+		RT4 -> WM1
+	}
+
+	operator retrieve-addition-complex {
+		WM2 = equals
+		WM4 <> nil
+		RT1 = nil
+		==>
+		addition -> RT1
+		WM3 -> RT2
+		WM4 -> RT3
+	}
+
+	operator fill-in-partial {
+		WM2 = equals
+		WM4 <> nil
+		RT2 = WM3
+		==>
+		WM1 -> WM1
+		WM2 -> WM2
+		RT4 -> WM3
+	}
+}
+
+// This goal perform transformation steps
+define goal solve {
+
+	operator retrieve-opposite {
+		WM3 = equals
+		WM2 <> nil
+		RT1 = nil
+		==>
+		minus -> RT1
+		WM2 -> RT2
+	}
+
+	operator term-to-right-side {
+		WM3 = equals
+		WM4 <> nil
+		WM2 = RT2
+		==>
+		WM1 -> WM1
+		WM3 -> WM2
+		WM4 -> WM3
+		RT0 -> WM4
+	}
+
+	operator find-number-in-x-expression {
+		WM2 = equals
+		WM1 <> nil
+		WM4 = nil
+		RT1 = nil
+		==>
+		WM1 -> RT0
+	}
+
+	operator transform-into-arithmetic {
+		WM2 = equals
+		WM3 <> nil
+		WM4 = nil
+		WM1 = RT0
+		==>
+		WM3 -> WM1
+		RT1 -> WM3
+		divide -> WM2
+	}
+	}
+
+	define goal report-answer {
+	operator say-answer-number {
+	WM1 <> nil
+	WM2 = nil
+	==>
+	say -> AC1
+	WM1 -> AC2
+	done -> G1
+	}
+}
+
+// These operators implement looking at the visual distraction
+// Given that subjects only look very briefly at the distraction,
+// the model immediately looks back after looking at the movie
+
+define goal attend-moving {
+	operator look-at-movie {
+		V1 = attend-moving
+		V2 = nil
+		==>
+		attend-movie -> AC1
+		attending -> V2
+	}
+
+	operator look-back {
+		V1 = attend-moving
+		V2 = attending
+		==>
+		nil -> V1
+	}
+}
+
+define facts {
+	(minus-two minus two)
+	(f1 addition two three five)
+	(f2 addition ten minus-two eight)
+	(f3 divide eight four two)
+	(four-x four x)
+}
+
+
+define screen trial {
+(item-one ?0)
+}
+
+define screen step1 {
+(item-two ?1)
+}
+
+define screen step2 {
+(item-three ?2)
+}
+
+define screen step3 {
+(item-four ?3)
+} 
+
+define screen think {
+(attend-moving)
+}
+
+transition(trial,step1) = action(read)
+transition(step1,step2) = action(read)
+transition(step2,step3) = action(read)
+transition(step3,think) = action(done-reading)
+transition(step2,think) = action(done-reading)
+
+define inputs {
+//(two addition three done five)
+//(four-x equals eight done two)
+(four-x two equals ten two)
+}
+
+define goal-action {
+(say ?4)
+}
+// Say includes time to move to next trial
+define action say {
+  latency: 2.0
+  noise: 0.1
+  distribution: uniform
+  output: Saying
+}

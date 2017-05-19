@@ -1,0 +1,402 @@
+/// Model of the complex working memory task with either and SRP or neutral condition
+define task CWM-SRT {
+	initial-goals: (processing  storage rehearsal report)
+	goals: (mind-wander1)
+      task-constants: (letter word list rehearsing restart)
+      imaginal-autoclear: t
+      rt: -0.6 // was -0.5
+      lf: 0.15
+      ga: 2
+      retrieval-reinforces: t
+      default-activation: 3.0
+      input-activation: 0.0
+      imaginal-activation: 1.5 // was 1.5
+      retrieval-activation: 3.0
+      ans: 0.3
+      alpha: 0.2
+      default-operator-self-assoc: -3
+      default-inter-operator-assoc: 2
+}
+
+// Goal to store letters that have been read
+// The model indexes these letters by their position
+
+define goal storage {
+  	operator read-letter1(activation=6.0)  {
+  	"Read the first letter and put it in WM. Store goal id in WM"
+    	WM1=nil
+    	V1=letter
+    	==>
+    	nil->V1
+    	V2->WM1
+    	G0->WM2
+    	one->WM3
+    	one->G5
+  	}
+
+  	operator read-letter2(activation=6.0) {
+  	"Read the second letter, store it in WM"
+    	V1=letter
+    	G5=one
+    	==>
+    	nil->V1
+    	V2->WM1
+    	G0->WM2
+    	two->WM3
+    	two->G5
+    	G5->G6
+    }
+
+  	operator read-letter3(activation=6.0) {
+  	"Read the third letter, store it in WM"
+    	V1=letter
+    	G5=two
+    	==>
+    	nil->V1
+    	V2->WM1
+    	G0->WM2
+    	three->WM3
+    	three->G5
+    	G5->G6
+  	}
+  	operator read-letter4(activation=6.0) {
+  	"Read the fourth letter, store it in WM"
+    	V1=letter
+    	G5=three
+    	==>
+    	nil->V1
+    	V2->WM1
+    	G0->WM2
+    	four->WM3
+    	four->G5
+    	G5->G6
+  	}
+  	operator read-letter5(activation=6.0) {
+  	"Read the fifth letter, store it in WM"
+    	V1=letter
+    	G5=four
+    	==>
+    	nil->V1
+    	V2->WM1
+    	G0->WM2
+    	five->WM3
+    	five->G5
+    	G5->G6
+  	}
+ 
+  	operator clear-WM(activation=5.0) {
+  	"clears the WM"
+ 	 	V1=nil
+ 	 	WM2=G0
+  		==>
+  		nil->WM1
+  		blank -> V1
+  	}
+}
+define goal processing {
+	operator read-word1 {
+	"Start processing"
+		V1 = word
+		RT1 <> word
+		RT1 <> personality
+		==>
+		word -> RT1
+		V2 -> RT2
+		nil -> G6
+	}
+	
+	operator read-word2 {
+	"Start processing"
+		V1 = word
+		RT1 = nil
+		==>
+		word -> RT1
+		V2 -> RT2
+		nil -> G6
+	}
+	operator retrieve-trait {
+		V1 = word
+		RT1 = word
+	==>
+		personality -> RT1
+		RT3 -> WM1
+		RT3 -> RT2
+	}
+	
+	operator processing-response {
+	"respond to read-word"
+		V1 = word
+		RT1 = personality
+		==>
+		press -> AC1
+		RT3 -> AC2
+	}
+}
+
+define goal rehearsal {
+	operator rehearse1a(activation = 2.0) {
+	"retrieves first letter"
+		V1 = blank
+		RT1 = nil
+		G6 = nil
+		==>
+		G0-> RT2
+		one->RT3
+		one -> G6
+		subvocalize -> AC1
+	}
+
+	operator rehearse1b(activation = 2.0) {
+	"retrieves first letter"
+		V1 = blank
+		RT2 <> G0
+		G6 = nil
+		==>
+		G0-> RT2
+		one->RT3
+		one -> G6
+		subvocalize -> AC1
+	}
+		
+	operator rehearse2(activation = 2.0) {
+	"retrieves second letter"
+		G5 <> one
+		G6 = one
+		==>
+		G0 -> RT2
+		two -> RT3
+		two -> G6
+		subvocalize -> AC1
+	}
+	
+	operator rehearse3(activation = 2.0) {
+	"retrieves third letter"
+		G5 <> two
+		G6 = two
+		==>
+		G0 -> RT2
+		three -> RT3
+		three -> G6
+		subvocalize -> AC1
+	}
+	
+	operator rehearse4(activation = 2.0) {
+	"retrieves fourth letter"
+		G5 <> three
+		G6 = three
+		==>
+		G0 -> RT2
+		four -> RT3
+		four -> G6
+		subvocalize -> AC1
+	}
+	
+	operator rehearse5(activation = 2.0) {
+	"retrieves fifth letter"
+		G5 <> four
+		G6 = four
+		==>
+		G0 -> RT2
+		five -> RT3
+		five -> G6
+		subvocalize -> AC1
+	}
+	
+	operator rehearse6(activation = 2.0) {
+	"retrieves sixth letter"
+//		V1 = blank
+		G5 <> five
+		G6 = five
+		==>
+		G0 -> RT2
+		six -> RT3
+		six -> G6
+		subvocalize -> AC1
+	}
+	
+	
+	operator restart-rehearse(activation = 2.0) {
+	"restarts the rehearse"
+		V1 = blank
+		G5 = G6
+		==>
+		retrievalfailure -> AC1
+		nil -> G6
+	}
+}
+
+define goal report {
+	operator retrieve1 {
+	"Retrieve item and bump anything remaining in WM to DM"
+    	V1=report
+    	==>
+    	G0-> RT2
+    	V2->RT3
+    	report->G1
+    	reporting->WM1
+  	}
+
+  	operator report-item {
+  	"Press item1"
+    	V1=report
+		RT1<>nil
+		G1=report
+    	==>
+    	press->AC1
+    	RT1->AC2
+  	}
+
+
+}
+
+define goal mind-wander1 {
+	operator wander {
+		RT1 = nil
+	==>
+		event -> RT1
+		wander -> AC1
+   }
+   
+   	operator wander-more {
+		RT1 = error
+	==>
+		event -> RT1
+		wander -> AC1
+   }
+   
+   operator wander-word {
+       RT1 = word
+       WM1 = nil
+    ==>
+    	event -> RT1
+    	wander -> AC1
+    }
+   
+   operator store-event {
+   		RT1 = event
+   	==>
+   		event -> WM1
+   		RT2 -> WM2
+   		elaborate -> AC1
+   	}
+   	   	
+}
+
+define action press {
+    latency: 0.5
+}
+
+define action subvocalize {
+	latency: 0.45
+    noise: 0.2
+    distribution: uniform
+}
+
+define action retrievalfailure {
+	latency: 0.6
+	noise: 0.1
+	distribution: uniform
+}
+
+define init-script {
+     letters = ["k","p","f","g","x","y"]
+     numbers = ["one","two","three","four","five","six"]
+     for x in letters {
+     	add-dm(x,x)
+     }
+     for x in numbers {
+     	add-dm(x,x)
+     }
+     add-dm("letter","letter")
+     read-operators = ["read-letter1","read-letter2","read-letter3","read-letter4","read-letter5"]
+     for x in read-operators {
+     	set-sji("letter", x, 8.0)
+     }
+    personality-words = ["angry","happy","sad","depressed","popular","impulsive","active","passive","thoughtful"]
+     yesno = ["yes","no"]
+     for x in personality-words {
+        wordname = random-string("word")
+        wordmeaning = random-string(x)
+        add-dm(wordname,"word", x, wordmeaning)
+     	i = random(2)
+     	name = random-string("emotion")
+     	add-dm(name,"personality",wordmeaning, yesno[i])
+     	set-sji(wordmeaning, "wander", 1.0)
+     	set-sji(wordmeaning, "wander-more", 1.0)
+     	set-sji(wordmeaning, "wander-word", 1.0)
+     }
+     item-words = ["elefant","pencil","paperclip","car","dog","mouse"]
+     for x in item-words {
+        wordname = random-string("word")
+        wordmeaning = random-string(x)
+        add-dm(wordname,"word", x, wordmeaning)
+     	i = random(2)
+     	name = random-string("shoebox")
+     	add-dm(name,"personality",wordmeaning, yesno[i])
+     }
+    events = ["breakfast","cycling","lecture","coffee","lunch","exam","nothing"]
+    add-dm("start-event","event","get-up")
+    lastevent = "start-event"
+    set-sji(lastevent, "wander", 2.0)
+    set-sji(lastevent, "wander-more", 2.0)
+    for x in events {
+    	name = random-string("event")
+    	add-dm(name,"event",x)
+    	set-sji(x, "store-event", 2.0)
+    	set-sji(lastevent, name, 2.0)
+    	set-sji(name, "wander", 2.0)
+    	set-sji(name, "wander-more", 2.0)
+    	lastname = name
+    }
+}
+
+define script {
+    letters = ["k","p","f","g","x","y"]
+    numbers = ["one","two","three","four","five","six"]
+    personality-words = ["angry","happy","sad","depressed","popular","impulsive","active","passive","thoughtful"]
+    item-words = ["elefant","pencil","paperclip","car","dog","mouse"]
+    conditions = ["control", "emotion"]
+    for condition in conditions {
+    	print("Condition is",condition)
+    	words = personality-words
+		if (condition == "control") {
+			words = item-words
+		}
+		set-data-file-field(1, condition)
+		for targets in [3, 4, 5] {
+			print("Testing span", targets)
+			trial-start()
+			set-data-file-field(2, targets)
+			starttime = time()
+			for i in 0 to (targets - 1) {
+				screen("letter",letters[i])
+				print(time(),"Displaying letter",letters[i])
+				run-absolute-time(starttime + 1.0)
+				endtime = starttime + 4.7
+				while (time() < endtime) {
+					k = random(length(words))
+					screen("word", words[k])
+					print(time(),"Displaying",words[k])
+					run-absolute-time-or-action(endtime, "press")
+				}
+				if (i != targets - 1) {
+					screen("blank")
+					print(time(),"Displaying blank")
+					if ( (time() - starttime) < 6.0) {
+						run-absolute-time(starttime + 6.0)
+					}
+				}
+				starttime = starttime + 6.0
+			}
+			for i in 0 to (targets - 1) {
+				screen("report",numbers[i])
+				set-data-file-field(3, i + 1)
+				run-until-action("press")
+				ac = last-action()
+				acfirst = ac[1]
+				print("action =",acfirst)
+			}
+			trial-end()
+		}
+	}
+} 

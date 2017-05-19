@@ -1,0 +1,7 @@
+repeat 100
+reset
+run wm-distraction wm-training 50
+run wm-distraction wm-distraction 100
+reset
+run crt-distraction crt-training 50
+run crt-distraction crt-distraction 100

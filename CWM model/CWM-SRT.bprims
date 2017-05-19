@@ -1,0 +1,4 @@
+repeat 20
+reset
+run CWM-SRT training 10
+run CWM-SRT test 20

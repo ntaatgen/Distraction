@@ -1,0 +1,197 @@
+/// Model of the CRT condition of the Smallwood et al. (2011) experiment
+
+define task crt-distraction {
+	initial-goals: (crt-distraction)
+	goals: (mind-wander)
+	task-constants: ()
+	lf: 0.3
+	ol: nil
+	imaginal-autoclear: nil
+	production-prim-latency: 0.2
+	  default-activation: 3.0
+	  input-activation: 0.1
+	  imaginal-activation: 2.0 
+	  retrieval-activation: 1.0
+	  ans: 0.3
+	  alpha: 0.2
+	  default-operator-self-assoc: -2.8 // was -3.0
+	  default-inter-operator-assoc: 2
+	reward: 25.0
+}
+
+/// The first set of operators implements doing the task
+
+define goal crt-distraction {
+	operator read-digit {
+		V1 <> X
+		V2 = nil
+	==>
+		attend -> AC1
+	}
+	
+	operator wait {
+		V1 = X
+	==>
+		focus -> AC1
+	}
+	
+	operator wait-more {
+		V2 = black
+	==>
+		focus -> AC1
+	}
+	
+	operator retrieve-parity-1 {
+		V1 <> nil
+		V2 = red
+		RT1 = nil
+	==>
+		number-parity -> RT1
+		V1 -> RT2
+	}
+	
+	operator retrieve-parity-2 {
+		V1 <> nil
+		V2 = red
+		RT1 <> number-parity
+		RT1 <> response-mapping
+	==>
+		number-parity -> RT1
+		V1 -> RT2
+	}
+	
+	operator retrieve-response {
+		RT1 = number-parity
+	==>
+		response-mapping -> RT1
+		RT3 -> RT2
+	}
+	
+	operator press-key {
+		RT1 = response-mapping
+	==>
+		press -> AC1
+		RT3 -> AC2
+		nil -> G1
+	}
+	
+	operator failed-trial {
+		RT1 = error
+	==>
+		press -> AC1
+		fail -> AC2
+		nil -> G1
+	}
+}
+
+
+/// These two operators implement mind wandering
+
+define goal mind-wander {
+	operator wander {
+		RT1 = nil
+	==>
+		event -> RT1
+		wander -> AC1
+   }
+
+   operator elaborate {
+   		RT1 = event
+   	==>
+   		event -> WM1
+   		RT2 -> WM2
+   		wander -> AC1
+   	}   	
+}
+
+
+define action attend {
+  latency: 0.2
+  noise: 0.05
+  distribution: uniform
+  output: Attending
+}
+
+define action focus {
+  latency: 0.3
+  noise: 0.1
+  distribution: uniform
+  output: Focussing
+}
+
+define action press {
+  latency: 0.2
+  noise: 0.05
+  distribution: uniform
+  output: Pressing
+}
+
+define action wander {
+  latency: 0.0
+  noise: 0.00
+  distribution: uniform
+  output: Wandering
+}
+
+
+define init-script {
+     numbers = ["one","two","three","four","five","six","seven","eight","nine","ten"]
+     i = 0
+     while (i < 9) {
+       name = random-string("number-parity")
+       add-dm(name,"number-parity",numbers[i],"odd")
+       name = random-string("number-parity")
+       add-dm(name,"number-parity",numbers[i + 1],"even")
+       i = i + 2
+    }
+    for x in numbers {
+    	set-sji(x, "read-digit", 8.0)
+    }
+    add-dm("red","color","red88")
+    set-sji("red", "retrieve-parity-1", 8.0) 
+    set-sji("red", "retrieve-parity-2", 8.0) 
+    add-dm("rmap1","response-mapping","odd","left")
+    add-dm("rmap2","response-mapping","even","right")
+    add-dm("event","event88")
+    events = ["breakfast","cycling","lecture","coffee","lunch","exam","nothing"]
+    add-dm("start-event","event","get-up")
+    set-sji("event","elaborate", 1.0)
+    lastevent = "start-event"
+    set-sji(lastevent, "wander", 2.0)
+    for x in events {
+    	name = random-string("event")
+    	add-dm(name,"event",x)
+    	set-sji(x, "wander", 0.2)
+    	set-sji(lastevent, name, 2.0)
+    	lastname = name
+    }
+}
+
+define script {
+    numbers = ["one","two","three","four","five","six","seven","eight","nine","ten"]
+	repeats = random(4) + 2
+	for i in 1 to repeats {
+		num = numbers[random(10)]
+		screen(num)
+		endtime = time() + 1.0
+		run-absolute-time-or-action(endtime,"attend")
+		ac = last-action()
+		acfirst = ac[0]
+		print("action =",acfirst)
+		if (acfirst != "") { // there was an attend action
+			screen(num,"black")
+			run-absolute-time(endtime)
+		}
+		screen("X")
+		crosstime = 0.9 + random(1200) / 1000.0
+		run-relative-time(crosstime)
+	}
+	x = random(10)
+	num = numbers[x]
+	screen(num)
+	run-until-action("attend")
+	screen(num,"red")
+	run-until-action("press")
+	issue-reward()
+	trial-end()
+} 
